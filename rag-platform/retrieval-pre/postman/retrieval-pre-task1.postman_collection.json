@@ -1,0 +1,423 @@
+{
+  "info": {
+    "name": "EduPulse AI - Retrieval-Pre (Story 3 - Task 1: Safe Metadata Filtering)",
+    "description": "Demonstrates safe URL metadata filtering: null filter fall-through, single-field filters, multi-variable AND/OR filters, combined AND/OR filter groups, IN operator, and 400 Bad Request validation errors listing valid fields.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "jwtToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwtToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. Get Whitelisted Metadata Filter Schema",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/retrieve/pre/filters/metadata",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "retrieve",
+            "pre",
+            "filters",
+            "metadata"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Lists validFields and validOperators', function () {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.validFields).to.be.an('object');",
+              "  pm.expect(json.validOperators).to.include('eq');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Standard Flow - Null Filter (Fall-Through)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/retrieve/pre/search?query=compliance%20requirements&topK=5",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "retrieve",
+            "pre",
+            "search"
+          ],
+          "query": [
+            {
+              "key": "query",
+              "value": "compliance requirements"
+            },
+            {
+              "key": "topK",
+              "value": "5"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Filter is not applied (null fall-through)', function () {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.filterApplied).to.eql(false);",
+              "  pm.expect(json.appliedFilter).to.be.null;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Multi-Variable AND Filter (source + page + is_latest)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/retrieve/pre/search?query=retention%20policy&topK=5&filter=source:eq:handbook.pdf&filter=page:gte:2&filter=is_latest:eq:true&logic=AND",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "retrieve",
+            "pre",
+            "search"
+          ],
+          "query": [
+            {
+              "key": "query",
+              "value": "retention policy"
+            },
+            {
+              "key": "topK",
+              "value": "5"
+            },
+            {
+              "key": "filter",
+              "value": "source:eq:handbook.pdf"
+            },
+            {
+              "key": "filter",
+              "value": "page:gte:2"
+            },
+            {
+              "key": "filter",
+              "value": "is_latest:eq:true"
+            },
+            {
+              "key": "logic",
+              "value": "AND"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('AND filter applied with 3 conditions', function () {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.filterApplied).to.eql(true);",
+              "  pm.expect(json.appliedFilter.rootOperator).to.eql('AND');",
+              "  pm.expect(json.appliedFilter.groups[0].conditions.length).to.eql(3);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Multi-Variable OR Filter (doc_id OR doc_id)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/retrieve/pre/search?query=audit%20scope&topK=5&filter=doc_id:eq:doc-001&filter=doc_id:eq:doc-002&logic=OR",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "retrieve",
+            "pre",
+            "search"
+          ],
+          "query": [
+            {
+              "key": "query",
+              "value": "audit scope"
+            },
+            {
+              "key": "topK",
+              "value": "5"
+            },
+            {
+              "key": "filter",
+              "value": "doc_id:eq:doc-001"
+            },
+            {
+              "key": "filter",
+              "value": "doc_id:eq:doc-002"
+            },
+            {
+              "key": "logic",
+              "value": "OR"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('OR filter applied', function () {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.filterApplied).to.eql(true);",
+              "  pm.expect(json.appliedFilter.rootOperator).to.eql('OR');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Combined AND + OR Filter Groups",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/retrieve/pre/search?query=governance%20controls&topK=5&filterGroup=org_unit:eq:unit-a;page:gte:2&filterGroup=org_unit:eq:unit-b;is_latest:eq:true",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "retrieve",
+            "pre",
+            "search"
+          ],
+          "query": [
+            {
+              "key": "query",
+              "value": "governance controls"
+            },
+            {
+              "key": "topK",
+              "value": "5"
+            },
+            {
+              "key": "filterGroup",
+              "value": "org_unit:eq:unit-a;page:gte:2"
+            },
+            {
+              "key": "filterGroup",
+              "value": "org_unit:eq:unit-b;is_latest:eq:true"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Nested AND/OR filter groups applied', function () {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.filterApplied).to.eql(true);",
+              "  pm.expect(json.appliedFilter.rootOperator).to.eql('OR');",
+              "  pm.expect(json.appliedFilter.groups.length).to.eql(2);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Direct URL Params & IN Operator",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/retrieve/pre/search?query=access%20control&filter=org_unit:in:unit-a,unit-b&page[gte]=1&is_latest=true&logic=AND",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "retrieve",
+            "pre",
+            "search"
+          ],
+          "query": [
+            {
+              "key": "query",
+              "value": "access control"
+            },
+            {
+              "key": "filter",
+              "value": "org_unit:in:unit-a,unit-b"
+            },
+            {
+              "key": "page[gte]",
+              "value": "1"
+            },
+            {
+              "key": "is_latest",
+              "value": "true"
+            },
+            {
+              "key": "logic",
+              "value": "AND"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "7. Error Case - Invalid Metadata Field (400 listing valid fields)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/retrieve/pre/search?query=audit%20policy&filter=non_whitelisted_field:eq:value",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "retrieve",
+            "pre",
+            "search"
+          ],
+          "query": [
+            {
+              "key": "query",
+              "value": "audit policy"
+            },
+            {
+              "key": "filter",
+              "value": "non_whitelisted_field:eq:value"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 400 Bad Request', function () { pm.response.to.have.status(400); });",
+              "pm.test('Error response lists validFields', function () {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.validFields).to.include('doc_id');",
+              "  pm.expect(json.validFields).to.include('source');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Error Case - Disallowed Operator (400)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/retrieve/pre/search?query=audit%20policy&filter=doc_id:regex:.*",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "retrieve",
+            "pre",
+            "search"
+          ],
+          "query": [
+            {
+              "key": "query",
+              "value": "audit policy"
+            },
+            {
+              "key": "filter",
+              "value": "doc_id:regex:.*"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 400 Bad Request', function () { pm.response.to.have.status(400); });",
+              "pm.test('Error response lists validOperators', function () {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.validOperators).to.include('eq');",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
