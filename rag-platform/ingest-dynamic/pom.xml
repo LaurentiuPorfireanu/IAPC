@@ -33,6 +33,15 @@
 	</properties>
 	<dependencies>
 		<dependency>
+			<groupId>org.jsoup</groupId> <!-- HTML fetching and boilerplate removal-->
+			<artifactId>jsoup</artifactId>
+			<version>1.18.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.ai</groupId> <!-- PDF document reader -->
+			<artifactId>spring-ai-pdf-document-reader</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
@@ -46,7 +55,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.ai</groupId>
-			<artifactId>spring-ai-starter-model-openai</artifactId>
+			<artifactId>spring-ai-starter-model-ollama</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.ai</groupId>
